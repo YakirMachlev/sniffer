@@ -1,21 +1,22 @@
 #include "process_packet.h"
-#include "ui.h"
+#include "control_sniffer.h"
 
-FILE *logfile;
+FILE *temp_file;
 int sock_raw;
 bool stop;
+unsigned char *buffer;
+int packet_id = 0;
 
 static void sniffer()
 {
     int sock_raw;
     pthread_t ui_thread;
-    unsigned char *buffer;
 
-    buffer = (unsigned char *)malloc(sizeof(char) * 65536);
-    logfile = fopen("log.txt", "w");
-    if (logfile == NULL)
-        printf("Couldn't create the log file");
-    
+    buffer = (unsigned char *)malloc(sizeof(unsigned char) * PACKET_MAX_LEN);
+    temp_file = tmpfile();
+    if (temp_file == NULL)
+        puts("Unable to create the temp file");
+
     printf("Starting...\n");
     sock_raw = socket(AF_INET, SOCK_RAW, htons(ETH_P_ALL));
     if (sock_raw < 0)
@@ -27,7 +28,7 @@ static void sniffer()
     pthread_join(ui_thread, NULL);
 
     close(sock_raw);
-    fclose(logfile);
+    fclose(temp_file);
     free(buffer);
     printf("Finished");
 }

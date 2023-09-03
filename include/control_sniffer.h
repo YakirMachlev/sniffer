@@ -1,9 +1,9 @@
 #pragma once
 
+#include <pthread.h>
 #include <stdbool.h>
 #include "process_packet.h"
 
 extern bool stop;
 
-void start_sniffing();
-
+void *user_actions();

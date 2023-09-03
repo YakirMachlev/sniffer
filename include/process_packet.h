@@ -14,12 +14,12 @@
 #include <unistd.h>
 #include <errno.h>
 
-extern FILE *logfile;
-extern int sock_raw;
+#define PACKET_MAX_LEN 65536
 
-void process_packet(unsigned char *, int);
-void print_ip_header(unsigned char *, int);
-void print_tcp_packet(unsigned char *, int);
-void print_udp_packet(unsigned char *, int);
-void print_icmp_packet(unsigned char *, int);
-void print_data(unsigned char *, int);
+extern FILE *temp_file;
+extern int sock_raw;
+extern unsigned char *buffer;
+extern int packet_id;
+
+void print_packet_summary(unsigned char *buffer, int len);
+void print_packet_detailed(unsigned char *buffer, int len, FILE *file);
