@@ -1,40 +1,34 @@
 #include "process_packet.h"
+#include "ui.h"
 
 FILE *logfile;
+int sock_raw;
+bool stop;
 
 static void sniffer()
 {
-    int buffer_len;
     int sock_raw;
-    struct sockaddr saddr;
-    int saddr_len;
+    pthread_t ui_thread;
+    unsigned char *buffer;
 
-    unsigned char *buffer = (unsigned char *)malloc(65536);
-
+    buffer = (unsigned char *)malloc(sizeof(char) * 65536);
     logfile = fopen("log.txt", "w");
     if (logfile == NULL)
         printf("Couldn't create the log file");
     
     printf("Starting...\n");
-    /* sock_raw = socket(AF_INET, SOCK_RAW, IPPROTO_RAW); */
     sock_raw = socket(AF_INET, SOCK_RAW, htons(ETH_P_ALL));
     if (sock_raw < 0)
     {
-        printf("Socket Error\n");
+        perror("Socket Error");
         exit(1);
     }
-    while (1)
-    {
-        saddr_len = sizeof(saddr);
-        buffer_len = recvfrom(sock_raw, buffer, 65536, 0, &saddr, (socklen_t *)&saddr_len);
-        if (buffer_len < 0)
-        {
-            printf("Recvfrom error, failed to get packets\n");
-            exit(1);
-        }
-        process_packet(buffer, buffer_len);
-    }
+    pthread_create(&ui_thread, NULL, user_actions, NULL);
+    pthread_join(ui_thread, NULL);
+
     close(sock_raw);
+    fclose(logfile);
+    free(buffer);
     printf("Finished");
 }
 

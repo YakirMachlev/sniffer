@@ -1,22 +1,34 @@
 #include "process_packet.h"
 
-int total = 0;
+int id = 0;
 struct sockaddr_in source, dest;
 
 void process_packet(unsigned char *buffer, int len)
 {
-    struct iphdr *ip_header = (struct iphdr *)buffer;
-    ++total;
+    struct iphdr *ip_header;
+    unsigned short ip_header_len;
+    struct tcphdr *tcp_header;
+    struct udphdr *udp_header;
+   
+    ++id;
+    ip_header = (struct iphdr *)(buffer + sizeof(struct ethhdr));
+    ip_header_len = ip_header->ihl * 4;
+
     switch (ip_header->protocol)
     {
     case 1: /* ICMP Protocol */
         print_icmp_packet(buffer, len);
+        printf("[%d] (ICMP) packet from (%s) to (%s)", id, inet_ntoa(source.sin_addr), inet_ntoa(dest.sin_addr));
         break;
     case 6: /* TCP Protocol */
         print_tcp_packet(buffer, len);
+        tcp_header = (struct tcphdr *)(buffer + ip_header_len + sizeof(struct ethhdr));
+        printf("[%d] (TCP) packet from (%s:%d) to (%s:%d)", id, inet_ntoa(source.sin_addr), ntohs(tcp_header->source), inet_ntoa(dest.sin_addr), ntohs(tcp_header->dest));
         break;
     case 17: /* UDP Protocol */
         print_udp_packet(buffer, len);
+        udp_header = (struct udphdr *)(buffer + ip_header_len + sizeof(struct ethhdr));
+        printf("[%d] (UDP) packet from (%s:%d) to (%s:%d)", id, inet_ntoa(source.sin_addr), ntohs(udp_header->source), inet_ntoa(dest.sin_addr), ntohs(udp_header->dest));
         break;
     }
 }
@@ -58,17 +70,17 @@ void print_tcp_packet(unsigned char *buffer, int len)
     struct iphdr *ip_header;
     unsigned short ip_header_len;
     struct tcphdr *tcp_header;
-
+    unsigned short headers_len;
+    
     ip_header = (struct iphdr *)(buffer + sizeof(struct ethhdr));
     ip_header_len = ip_header->ihl * 4;
     tcp_header = (struct tcphdr *)(buffer + ip_header_len + sizeof(struct ethhdr));
-
+    
     fprintf(logfile, "\n\n***********************TCP Packet*************************\n");
     print_ethernet_header(buffer, len);
     print_ip_header(buffer, len);
 
-    fprintf(logfile, "\n");
-    fprintf(logfile, "TCP Header\n");
+    fprintf(logfile, "\nTCP Header\n");
     fprintf(logfile, "\t\t|-Source Port        : %u\n", ntohs(tcp_header->source));
     fprintf(logfile, "\t\t|-Destination Port   : %u\n", ntohs(tcp_header->dest));
     fprintf(logfile, "\t\t|-Sequence Number    : %u\n", ntohl(tcp_header->seq));
@@ -86,7 +98,8 @@ void print_tcp_packet(unsigned char *buffer, int len)
     fprintf(logfile, "\t\t|-Urgent Pointer     : %d\n", tcp_header->urg_ptr);
 
     fprintf(logfile, "\nData\n");
-    print_data(buffer + ip_header_len + tcp_header->doff * 4, (len - tcp_header->doff * 4 - ip_header_len));
+    headers_len = ip_header_len + tcp_header->doff * 4;
+    print_data(buffer + headers_len, len - headers_len);
     fprintf(logfile, "\n**********************************************************\n");
 }
 
@@ -95,6 +108,7 @@ void print_udp_packet(unsigned char *buffer, int len)
     struct iphdr *ip_header;
     unsigned short ip_header_len;
     struct udphdr *udp_header;
+    unsigned short headers_len;
 
     ip_header = (struct iphdr *)(buffer + sizeof(struct ethhdr));
     ip_header_len = ip_header->ihl * 4;
@@ -111,7 +125,8 @@ void print_udp_packet(unsigned char *buffer, int len)
     fprintf(logfile, "\t\t|-UDP Checksum     : %d\n", ntohs(udp_header->check));
 
     fprintf(logfile, "Data\n");
-    print_data(buffer + ip_header_len + sizeof(udp_header), (len - sizeof(udp_header) - ip_header_len));
+    headers_len = ip_header_len + sizeof(udp_header);
+    print_data(buffer + headers_len, len - headers_len);
     fprintf(logfile, "\n**********************************************************\n");
 }
 
@@ -120,6 +135,7 @@ void print_icmp_packet(unsigned char *buffer, int len)
     struct iphdr *ip_header;
     unsigned short ip_header_len;
     struct icmphdr *icmp_header;
+    unsigned short headers_len;
 
     ip_header = (struct iphdr *)(buffer + sizeof(struct ethhdr));
     ip_header_len = ip_header->ihl * 4;
@@ -129,9 +145,7 @@ void print_icmp_packet(unsigned char *buffer, int len)
     print_ethernet_header(buffer, len);
     print_ip_header(buffer, len);
 
-    fprintf(logfile, "\n");
-
-    fprintf(logfile, "ICMP Header\n");
+    fprintf(logfile, "\nICMP Header\n");
     fprintf(logfile, "\t\t|-Type : %d", (unsigned int)(icmp_header->type));
 
     if ((unsigned int)(icmp_header->type) == 11)
@@ -140,12 +154,12 @@ void print_icmp_packet(unsigned char *buffer, int len)
         fprintf(logfile, "\t\t(ICMP Echo Reply)\n");
     fprintf(logfile, "\t\t|-Code : %d\n", (unsigned int)(icmp_header->code));
     fprintf(logfile, "\t\t|-Checksum : %d\n", ntohs(icmp_header->checksum));
-    /*     fprintf(logfile, "\t\t|-ID       : %d\n", ntohs(icmph->id));
-        fprintf(logfile, "\t\t|-Sequence : %d\n", ntohs(icmph->sequence)); */
-    fprintf(logfile, "\n");
+    fprintf(logfile, "\t\t|-ID       : %d\n", ntohs(icmp_header->un.echo.id));
+    fprintf(logfile, "\t\t|-Sequence : %d\n", ntohs(icmp_header->un.echo.sequence));
 
     fprintf(logfile, "\nData\n");
-    print_data(buffer + ip_header_len + sizeof(icmp_header), (len - sizeof(icmp_header) - ip_header_len));
+    headers_len = ip_header_len + sizeof(icmp_header);
+    print_data(buffer + headers_len, len - headers_len);
 
     fprintf(logfile, "\n**********************************************************\n");
 }
