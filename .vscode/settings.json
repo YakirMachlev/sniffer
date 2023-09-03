@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "stdlib.h": "c",
+        "tcp.h": "c",
+        "process_packet.h": "c"
+    }
+}
