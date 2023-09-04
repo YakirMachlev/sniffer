@@ -2,8 +2,8 @@
 
 #include <pthread.h>
 #include <stdbool.h>
+#include <time.h>
 #include "process_packet.h"
 
-extern bool stop;
-
 void *user_actions();
+void start_sniffing();

@@ -72,6 +72,21 @@ static void print_ip_header(unsigned char *buffer, int len, FILE *file)
     fprintf(file, "\t\t|-Destination IP          : %s\n", inet_ntoa(dest.sin_addr));
 }
 
+static void print_packet_data(unsigned char *data, int len, FILE *file)
+{
+    int i;
+
+    fprintf(file, " %.2X ", data[0]);
+    for (i = 1; i < len; i++)
+    {
+        if (i % 16 == 0)
+        {
+            fprintf(file, "\n");
+        }
+        fprintf(file, " %.2X ", data[i]);
+    }
+}
+
 static void print_tcp_packet(unsigned char *buffer, int len, FILE *file)
 {
     struct iphdr *ip_header;
@@ -169,21 +184,6 @@ static void print_icmp_packet(unsigned char *buffer, int len, FILE *file)
     print_packet_data(buffer + headers_len, len - headers_len, file);
 
     fprintf(file, "\n**********************************************************\n");
-}
-
-static void print_packet_data(unsigned char *data, int len, FILE *file)
-{
-    int i;
-
-    fprintf(file, " %.2X ", data[0]);
-    for (i = 1; i < len; i++)
-    {
-        if (i % 16 == 0)
-        {
-            fprintf(file, "\n");
-        }
-        fprintf(file, " %.2X ", data[i]);
-    }
 }
 
 void print_packet_detailed(unsigned char *buffer, int len, FILE *file)
