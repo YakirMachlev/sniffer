@@ -1,6 +1,6 @@
 #include "process_packet.h"
 
-void print_packet_summary(unsigned char *buffer, int len)
+void print_packet_summary(unsigned char *buffer, unsigned int len)
 {
     struct iphdr *ip_header;
     unsigned short ip_header_len;
@@ -13,18 +13,13 @@ void print_packet_summary(unsigned char *buffer, int len)
     ip_header = (struct iphdr *)(buffer + sizeof(struct ethhdr));
     ip_header_len = ip_header->ihl * 4;
 
-    memset(&source, 0, sizeof(source));
-    source.sin_addr.s_addr = ip_header->saddr;
-    memset(&dest, 0, sizeof(dest));
-    dest.sin_addr.s_addr = ip_header->daddr;
-
     switch (ip_header->protocol)
     {
-    case 1: /* ICMP Protocol */
+    case 1: 
         printf("[%d] (ICMP) packet from (%s) to (%s)", packet_id, inet_ntoa(source.sin_addr), inet_ntoa(dest.sin_addr));
         fwrite(buffer, 1, PACKET_MAX_LEN, temp_file);
         break;
-    case 6: /* TCP Protocol */
+    case 6:
         tcp_header = (struct tcphdr *)(buffer + ip_header_len + sizeof(struct ethhdr));
         printf("[%d] (TCP) packet from (%s:%d) to (%s:%d)", packet_id, inet_ntoa(source.sin_addr), ntohs(tcp_header->source), inet_ntoa(dest.sin_addr), ntohs(tcp_header->dest));
         fwrite(buffer, 1, PACKET_MAX_LEN, temp_file);
@@ -37,7 +32,7 @@ void print_packet_summary(unsigned char *buffer, int len)
     }
 }
 
-static void print_ethernet_header(unsigned char *buffer, int len, FILE *file)
+static void print_ethernet_header(unsigned char *buffer, unsigned int len, FILE *file)
 {
     struct ethhdr *eth = (struct ethhdr *)buffer;
 
@@ -47,7 +42,7 @@ static void print_ethernet_header(unsigned char *buffer, int len, FILE *file)
     fprintf(file, "\t\t|-Protocol : %d\n", eth->h_proto);
 }
 
-static void print_ip_header(unsigned char *buffer, int len, FILE *file)
+static void print_ip_header(unsigned char *buffer, unsigned int len, FILE *file)
 {
     struct iphdr *ip_header;
     struct sockaddr_in source;
@@ -72,7 +67,7 @@ static void print_ip_header(unsigned char *buffer, int len, FILE *file)
     fprintf(file, "\t\t|-Destination IP          : %s\n", inet_ntoa(dest.sin_addr));
 }
 
-static void print_packet_data(unsigned char *data, int len, FILE *file)
+static void print_packet_data(unsigned char *data, unsigned int len, FILE *file)
 {
     int i;
 
@@ -87,7 +82,7 @@ static void print_packet_data(unsigned char *data, int len, FILE *file)
     }
 }
 
-static void print_tcp_packet(unsigned char *buffer, int len, FILE *file)
+static void print_tcp_packet(unsigned char *buffer, unsigned int len, FILE *file)
 {
     struct iphdr *ip_header;
     unsigned short ip_header_len;
@@ -125,7 +120,7 @@ static void print_tcp_packet(unsigned char *buffer, int len, FILE *file)
     fprintf(file, "\n**********************************************************\n");
 }
 
-static void print_udp_packet(unsigned char *buffer, int len, FILE *file)
+static void print_udp_packet(unsigned char *buffer, unsigned int len, FILE *file)
 {
     struct iphdr *ip_header;
     unsigned short ip_header_len;
@@ -152,7 +147,7 @@ static void print_udp_packet(unsigned char *buffer, int len, FILE *file)
     fprintf(file, "\n**********************************************************\n");
 }
 
-static void print_icmp_packet(unsigned char *buffer, int len, FILE *file)
+static void print_icmp_packet(unsigned char *buffer, unsigned int len, FILE *file)
 {
     struct iphdr *ip_header;
     unsigned short ip_header_len;
@@ -186,7 +181,7 @@ static void print_icmp_packet(unsigned char *buffer, int len, FILE *file)
     fprintf(file, "\n**********************************************************\n");
 }
 
-void print_packet_detailed(unsigned char *buffer, int len, FILE *file)
+void print_packet_detailed(unsigned char *buffer, unsigned int len, FILE *file)
 {
     struct iphdr *ip_header;
 

@@ -1,13 +1,15 @@
 #include "control_sniffer.h"
 
-bool stop = false;
+bool stop;
 
-void start_sniffing()
+void *start_sniffing()
 {
     int saddr_len;
     struct sockaddr saddr;
-    int buffer_len;
+    unsigned int buffer_len;
 
+    stop = false;
+    puts("\nStarts sniffing");
     while (!stop)
     {
         saddr_len = sizeof(saddr);
@@ -15,14 +17,18 @@ void start_sniffing()
         if (buffer_len < 0)
         {
             puts("Recvfrom error, failed to get packets");
-            /* exit(1); */
+            exit(1);
         }
-        else
-        {
-            puts("hi");
-            print_packet_summary(buffer, buffer_len);
-        }
+        print_packet_summary(buffer, buffer_len);
     }
+
+    pthread_exit(NULL);
+}
+
+void stop_sniffing()
+{
+    puts("\nStops sniffing");
+    stop = true;
 }
 
 void inspect_packet()
@@ -30,6 +36,7 @@ void inspect_packet()
     int32_t id;
     /* something with lock */
 
+    puts("\nInspect packet:");
     id = 1;
     while (id)
     {
@@ -68,6 +75,7 @@ void create_packets_log_file()
         temp_file += PACKET_MAX_LEN;
         puts("c");
     }
+    printf("\nCreated the file %s\n", file_name);
 }
 
 void reset_sniffer()
@@ -76,6 +84,8 @@ void reset_sniffer()
     system("clear");
     fclose(temp_file);
     temp_file = tmpfile();
+
+    puts("Reset sniffer");
 }
 
 void handle_action(char action)
@@ -83,23 +93,26 @@ void handle_action(char action)
     switch (action)
     {
     case 's':
-        stop = false;
-        packet_id = 0;
-        start_sniffing();
+        pthread_create(&sniffer_thread, NULL, start_sniffing, NULL);
         break;
     case 'k':
-        stop = true;
+    case 'b':
+        stop_sniffing();
         break;
     case 'i':
+        stop_sniffing();
         inspect_packet();
         break;
-    case 27: /* ESC */
-        break;
     case 'd':
+        stop_sniffing();
         create_packets_log_file();
         break;
     case 'e':
+        stop_sniffing();
         reset_sniffer();
+        break;
+    default:
+        puts("Invalid option");
         break;
     }
 }
@@ -107,9 +120,13 @@ void handle_action(char action)
 void *user_actions()
 {
     char action;
-    while ((action = getchar()))
+    
+    pthread_detach(pthread_self());
+    action = 0;
+    while (action != 'b')
     {
-        puts("action");
+        puts("\ns - start listening\nk - stop listening\ni - inspect packet\nd - create log file\ne - erase history\nb - exit the program");
+        scanf(" %c", &action);
         handle_action(action);
     }
 

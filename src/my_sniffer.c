@@ -5,6 +5,7 @@ FILE *temp_file;
 int sock_raw;
 unsigned char *buffer;
 int packet_id = 0;
+pthread_t sniffer_thread;
 
 static void sniffer()
 {
@@ -15,7 +16,9 @@ static void sniffer()
     memset(buffer, 0, PACKET_MAX_LEN);
     temp_file = tmpfile();
     if (temp_file == NULL)
+    {
         puts("Unable to create the temp file");
+    }
 
     puts("Welcome to my sniffer");
     sock_raw = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
@@ -25,9 +28,9 @@ static void sniffer()
         exit(1);
     }
 
-    start_sniffing();
-    /* pthread_create(&ui_thread, NULL, user_actions, NULL);
-    pthread_join(ui_thread, NULL); */
+    /* start_sniffing(); */
+    pthread_create(&ui_thread, NULL, user_actions, NULL);
+    pthread_join(ui_thread, NULL);
 
     close(sock_raw);
     fclose(temp_file);

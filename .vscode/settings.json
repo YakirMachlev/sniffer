@@ -5,6 +5,7 @@
         "process_packet.h": "c",
         "ui.h": "c",
         "control_sniffer.h": "c",
-        "pthread.h": "c"
+        "pthread.h": "c",
+        "errno.h": "c"
     }
 }

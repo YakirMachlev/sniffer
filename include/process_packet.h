@@ -13,6 +13,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <errno.h>
+#include <pthread.h>
 
 #define PACKET_MAX_LEN 65536
 
@@ -20,6 +21,7 @@ extern FILE *temp_file;
 extern int sock_raw;
 extern unsigned char *buffer;
 extern int packet_id;
+extern pthread_t sniffer_thread;
 
-void print_packet_summary(unsigned char *buffer, int len);
-void print_packet_detailed(unsigned char *buffer, int len, FILE *file);
+void print_packet_summary(unsigned char *buffer, unsigned int len);
+void print_packet_detailed(unsigned char *buffer, unsigned int len, FILE *file);
