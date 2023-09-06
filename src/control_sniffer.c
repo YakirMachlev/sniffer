@@ -1,6 +1,7 @@
 #include "control_sniffer.h"
 
 bool stop;
+unsigned char *buffer;
 
 void *start_sniffing()
 {
@@ -8,10 +9,13 @@ void *start_sniffing()
     struct sockaddr saddr;
     unsigned int buffer_len;
 
+    pthread_detach(pthread_self());
+
     stop = false;
     puts("\nStarts sniffing");
     while (!stop)
     {
+        pthread_mutex_lock(&mutex);
         saddr_len = sizeof(saddr);
         buffer_len = recvfrom(sock_raw, buffer, PACKET_MAX_LEN, 0, &saddr, (socklen_t *)&saddr_len);
         if (buffer_len < 0)
@@ -19,22 +23,21 @@ void *start_sniffing()
             puts("Recvfrom error, failed to get packets");
             exit(1);
         }
-        print_packet_summary(buffer, buffer_len);
+        print_packet_summary(buffer);
     }
 
     pthread_exit(NULL);
 }
 
-void stop_sniffing()
+static void stop_sniffing()
 {
     puts("\nStops sniffing");
     stop = true;
 }
 
-void inspect_packet()
+static void inspect_packet()
 {
     int32_t id;
-    /* something with lock */
 
     puts("\nInspect packet:");
     id = 1;
@@ -46,11 +49,11 @@ void inspect_packet()
         fseek(temp_file, id * PACKET_MAX_LEN, SEEK_SET);
         fread(buffer, 1, PACKET_MAX_LEN, temp_file);
 
-        print_packet_detailed(buffer, strlen((char *)buffer), stdin);
+        print_packet_detailed(buffer, strlen((char *)buffer), stdout);
     }
 }
 
-void create_packets_log_file()
+static void create_packets_log_file()
 {
     char file_name[40];
     FILE *log_file;
@@ -75,10 +78,11 @@ void create_packets_log_file()
         temp_file += PACKET_MAX_LEN;
         puts("c");
     }
+    fclose(log_file);
     printf("\nCreated the file %s\n", file_name);
 }
 
-void reset_sniffer()
+static void reset_sniffer()
 {
     packet_id = 0;
     system("clear");
@@ -88,7 +92,7 @@ void reset_sniffer()
     puts("Reset sniffer");
 }
 
-void handle_action(char action)
+static void handle_action(char action)
 {
     switch (action)
     {
@@ -120,9 +124,13 @@ void handle_action(char action)
 void *user_actions()
 {
     char action;
-    
+
     pthread_detach(pthread_self());
+
     action = 0;
+    buffer = (unsigned char *)malloc(PACKET_MAX_LEN);
+    memset(buffer, 0, PACKET_MAX_LEN);
+
     while (action != 'b')
     {
         puts("\ns - start listening\nk - stop listening\ni - inspect packet\nd - create log file\ne - erase history\nb - exit the program");
@@ -130,5 +138,6 @@ void *user_actions()
         handle_action(action);
     }
 
+    free(buffer);
     pthread_exit(NULL);
 }

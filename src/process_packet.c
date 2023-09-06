@@ -1,6 +1,6 @@
 #include "process_packet.h"
 
-void print_packet_summary(unsigned char *buffer, unsigned int len)
+void print_packet_summary(unsigned char *buffer)
 {
     struct iphdr *ip_header;
     unsigned short ip_header_len;
@@ -8,14 +8,16 @@ void print_packet_summary(unsigned char *buffer, unsigned int len)
     struct udphdr *udp_header;
     struct sockaddr_in source;
     struct sockaddr_in dest;
-    
+
     ++packet_id;
     ip_header = (struct iphdr *)(buffer + sizeof(struct ethhdr));
     ip_header_len = ip_header->ihl * 4;
 
+    printf("protocol: %d\n", ip_header->protocol);
+    printf("%d\n", ip_header->saddr);
     switch (ip_header->protocol)
     {
-    case 1: 
+    case 1:
         printf("[%d] (ICMP) packet from (%s) to (%s)", packet_id, inet_ntoa(source.sin_addr), inet_ntoa(dest.sin_addr));
         fwrite(buffer, 1, PACKET_MAX_LEN, temp_file);
         break;
@@ -30,6 +32,7 @@ void print_packet_summary(unsigned char *buffer, unsigned int len)
         fwrite(buffer, 1, PACKET_MAX_LEN, temp_file);
         break;
     }
+    pthread_mutex_unlock(&mutex);
 }
 
 static void print_ethernet_header(unsigned char *buffer, unsigned int len, FILE *file)
