@@ -26,4 +26,4 @@ extern pthread_t sniffer_thread;
 extern pthread_mutex_t mutex;
 
 void print_packet_summary(unsigned char *buffer);
-void print_packet_detailed(unsigned char *buffer, unsigned int len, FILE *file);
+void print_packet_detailed(unsigned char *buffer, uint32_t len, FILE *file);

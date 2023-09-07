@@ -9,7 +9,6 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void sniffer()
 {
-    int sock_raw;
     pthread_t ui_thread;
 
     temp_file = tmpfile();
@@ -19,17 +18,26 @@ static void sniffer()
     }
 
     puts("Welcome to my sniffer");
-
     sock_raw = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
-    /* setsockopt(sock_raw, SOL_SOCKET, SO_BINDTODEVICE, "eth0", strlen("eth0")); */
     if (sock_raw < 0)
     {
         perror("Socket Error");
         exit(1);
     }
 
-    pthread_create(&ui_thread, NULL, user_actions, NULL);
-    pthread_join(ui_thread, NULL);
+    /* buffer = (unsigned char *)malloc(PACKET_MAX_LEN);
+    while (true)
+    {
+        buffer_len = recvfrom(sock_raw, buffer, PACKET_MAX_LEN, 0, NULL, NULL);
+        if (buffer_len < 0)
+        {
+            puts("Recvfrom error, failed to get packets");
+            exit(1);
+        }
+        print_packet_summary(buffer);
+    }
+    free(buffer); */
+    user_actions();
 
     close(sock_raw);
     fclose(temp_file);

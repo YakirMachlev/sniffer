@@ -5,9 +5,7 @@ unsigned char *buffer;
 
 void *start_sniffing()
 {
-    int saddr_len;
-    struct sockaddr saddr;
-    unsigned int buffer_len;
+    uint32_t buffer_len;
 
     pthread_detach(pthread_self());
 
@@ -15,9 +13,7 @@ void *start_sniffing()
     puts("\nStarts sniffing");
     while (!stop)
     {
-        pthread_mutex_lock(&mutex);
-        saddr_len = sizeof(saddr);
-        buffer_len = recvfrom(sock_raw, buffer, PACKET_MAX_LEN, 0, &saddr, (socklen_t *)&saddr_len);
+        buffer_len = recvfrom(sock_raw, buffer, PACKET_MAX_LEN, 0, NULL, NULL);
         if (buffer_len < 0)
         {
             puts("Recvfrom error, failed to get packets");
@@ -121,16 +117,12 @@ static void handle_action(char action)
     }
 }
 
-void *user_actions()
+void user_actions()
 {
     char action;
 
-    pthread_detach(pthread_self());
-
-    action = 0;
     buffer = (unsigned char *)malloc(PACKET_MAX_LEN);
-    memset(buffer, 0, PACKET_MAX_LEN);
-
+    action = 0;
     while (action != 'b')
     {
         puts("\ns - start listening\nk - stop listening\ni - inspect packet\nd - create log file\ne - erase history\nb - exit the program");
@@ -139,5 +131,4 @@ void *user_actions()
     }
 
     free(buffer);
-    pthread_exit(NULL);
 }
