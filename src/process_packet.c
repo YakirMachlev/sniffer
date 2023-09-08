@@ -1,6 +1,6 @@
 #include "process_packet.h"
 
-void print_packet_summary(unsigned char *buffer)
+void print_packet_summary(unsigned char *buffer, uint32_t buffer_len)
 {
     struct iphdr *ip_header;
     uint16_t ip_header_len;
@@ -17,16 +17,19 @@ void print_packet_summary(unsigned char *buffer)
     {
     case 1:
         printf("[%d] (ICMP) packet from (%s) to (%s)\n", packet_id, inet_ntoa(source.sin_addr), inet_ntoa(dest.sin_addr));
+        fwrite(&buffer_len, 1, PACKET_LEN_SIZE, temp_file);
         fwrite(buffer, 1, PACKET_MAX_LEN, temp_file);
         break;
     case 6:
         tcp_header = (struct tcphdr *)(buffer + ip_header_len + sizeof(struct ethhdr));
         printf("[%d] (TCP) packet from (%s:%d) to (%s:%d)\n", packet_id, inet_ntoa(source.sin_addr), ntohs(tcp_header->source), inet_ntoa(dest.sin_addr), ntohs(tcp_header->dest));
+        fwrite(&buffer_len, 1, PACKET_LEN_SIZE, temp_file);
         fwrite(buffer, 1, PACKET_MAX_LEN, temp_file);
         break;
     case 17:
         udp_header = (struct udphdr *)(buffer + ip_header_len + sizeof(struct ethhdr));
         printf("[%d] (UDP) packet from (%s:%d) to (%s:%d)\n", packet_id, inet_ntoa(source.sin_addr), ntohs(udp_header->source), inet_ntoa(dest.sin_addr), ntohs(udp_header->dest));
+        fwrite(&buffer_len, 1, PACKET_LEN_SIZE, temp_file);
         fwrite(buffer, 1, PACKET_MAX_LEN, temp_file);
         break;
     }
@@ -36,7 +39,7 @@ static void print_ethernet_header(unsigned char *buffer, uint32_t len, FILE *fil
 {
     struct ethhdr *eth = (struct ethhdr *)buffer;
 
-    fprintf(file, "\nEthernet Header\n");
+    fprintf(file, "Ethernet Header\n");
     fprintf(file, "\t|-Source Address : %.2X-%.2X-%.2X-%.2X-%.2X-%.2X\n", eth->h_source[0], eth->h_source[1], eth->h_source[2], eth->h_source[3], eth->h_source[4], eth->h_source[5]);
     fprintf(file, "\t|-Destination Address : %.2X-%.2X-%.2X-%.2X-%.2X-%.2X\n", eth->h_dest[0], eth->h_dest[1], eth->h_dest[2], eth->h_dest[3], eth->h_dest[4], eth->h_dest[5]);
     fprintf(file, "\t|-Protocol : %d\n", eth->h_proto);

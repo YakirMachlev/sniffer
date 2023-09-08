@@ -19,7 +19,7 @@ void *start_sniffing()
             puts("Recvfrom error, failed to get packets");
             exit(1);
         }
-        print_packet_summary(buffer);
+        print_packet_summary(buffer, buffer_len);
     }
 
     pthread_exit(NULL);
@@ -34,23 +34,28 @@ static void stop_sniffing()
 static void inspect_packet()
 {
     int32_t id;
+    uint32_t buffer_len;
 
     puts("\nInspect packet:");
-    id = 1;
+
+    printf("Enter the packet id (0 to stop): ");
+    scanf("%d", &id);
     while (id)
     {
-        printf("Enter the packet id: ");
-        scanf("%d", &id);
-
-        fseek(temp_file, id * PACKET_MAX_LEN, SEEK_SET);
+        fseek(temp_file, (id - 1) * (PACKET_LEN_SIZE + PACKET_MAX_LEN), SEEK_SET);
+        fread(&buffer_len, 1, PACKET_LEN_SIZE, temp_file);
         fread(buffer, 1, PACKET_MAX_LEN, temp_file);
+        print_packet_detailed(buffer, buffer_len, stdout);
 
-        print_packet_detailed(buffer, strlen((char *)buffer), stdout);
+        printf("Enter the packet id (0 to stop): ");
+        scanf("%d", &id);
     }
+    puts("Inspect finished");
 }
 
 static void create_packets_log_file()
 {
+    uint32_t buffer_len;
     char file_name[40];
     FILE *log_file;
     time_t t;
@@ -69,9 +74,10 @@ static void create_packets_log_file()
     rewind(temp_file);
     while (!feof(temp_file))
     {
+        fread(&buffer_len, 1, PACKET_LEN_SIZE, temp_file);
         fread(buffer, 1, PACKET_MAX_LEN, temp_file);
-        print_packet_detailed(buffer, strlen((char *)buffer), log_file);
-        temp_file += PACKET_MAX_LEN;
+        print_packet_detailed(buffer, buffer_len, log_file);
+        temp_file += PACKET_LEN_SIZE + PACKET_MAX_LEN;
         puts("c");
     }
     fclose(log_file);

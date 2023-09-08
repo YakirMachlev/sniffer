@@ -9,8 +9,6 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void sniffer()
 {
-    pthread_t ui_thread;
-
     temp_file = tmpfile();
     if (temp_file == NULL)
     {

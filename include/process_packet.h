@@ -18,6 +18,7 @@
 #include <pthread.h>
 
 #define PACKET_MAX_LEN 65536
+#define PACKET_LEN_SIZE 32
 
 extern FILE *temp_file;
 extern int sock_raw;
@@ -25,5 +26,5 @@ extern int packet_id;
 extern pthread_t sniffer_thread;
 extern pthread_mutex_t mutex;
 
-void print_packet_summary(unsigned char *buffer);
+void print_packet_summary(unsigned char *buffer, uint32_t len);
 void print_packet_detailed(unsigned char *buffer, uint32_t len, FILE *file);
