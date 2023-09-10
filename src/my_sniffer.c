@@ -1,12 +1,17 @@
-#include "process_packet.h"
+#include "print_packet.h"
 #include "control_sniffer.h"
 
 FILE *temp_file;
 int sock_raw;
 int packet_id = 0;
 pthread_t sniffer_thread;
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
+/**
+ * @brief the main packets sniffer program that sniffs raw sockets and allows
+ * the user to access the transmitted packets and get information about them,
+ * as well as create log files containing the packets
+ * 
+ */
 static void sniffer()
 {
     temp_file = tmpfile();
@@ -22,7 +27,7 @@ static void sniffer()
         perror("Socket Error");
         exit(1);
     }
-    user_actions();
+    control_sniffer_actions();
 
     close(sock_raw);
     fclose(temp_file);

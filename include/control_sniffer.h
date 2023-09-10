@@ -2,6 +2,13 @@
 
 #include <stdbool.h>
 #include <time.h>
-#include "process_packet.h"
+#include <pthread.h>
+#include "print_packet.h"
 
-void user_actions();
+extern pthread_t sniffer_thread;
+
+/**
+ * @brief receives an input from the user and executes the appropriate function
+ * 
+ */
+void control_sniffer_actions();

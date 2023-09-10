@@ -3,7 +3,11 @@
 bool stop;
 unsigned char *buffer;
 
-void *start_sniffing()
+/**
+ * @brief starts sniffing packets and writes a summary of each packet
+ * 
+ */
+static void *control_sniffer_start()
 {
     uint32_t buffer_len;
 
@@ -25,13 +29,22 @@ void *start_sniffing()
     pthread_exit(NULL);
 }
 
-static void stop_sniffing()
+/**
+ * @brief stops the sniffing process
+ * 
+ */
+static void control_sniffer_stop()
 {
     puts("\nStops sniffing");
     stop = true;
 }
 
-static void inspect_packet()
+/**
+ * @brief allows the user too get detailed information about
+ * each packet that was sniffed
+ * 
+ */
+static void control_sniffer_inspect_packet()
 {
     int32_t id;
     uint32_t buffer_len;
@@ -59,7 +72,12 @@ static void inspect_packet()
     puts("Inspect finished");
 }
 
-static void create_packets_log_file()
+/**
+ * @brief created a log file that contains a detailed description of the
+ * sniffed packets
+ * 
+ */
+static void control_sniffer_create_packets_log_file()
 {
     uint32_t buffer_len;
     char file_name[40];
@@ -68,6 +86,7 @@ static void create_packets_log_file()
     struct tm tm;
     char date[11];
     char hour[9];
+    bool empty_file;
 
     t = time(NULL);
     tm = *localtime(&t);
@@ -77,18 +96,27 @@ static void create_packets_log_file()
     sprintf(file_name, "my_sniffer_%s_%s.txt", date, hour);
     log_file = fopen(file_name, "w+");
 
-    rewind(temp_file);
-    while (!feof(temp_file))
+    fseek(temp_file, 0, SEEK_END);
+    empty_file = ftell(temp_file) == 0;
+    if (!empty_file)
     {
-        fread(&buffer_len, PACKET_LEN_SIZE, 1, temp_file);
-        fread(buffer, PACKET_MAX_LEN, 1, temp_file);
-        print_packet_detailed(buffer, buffer_len, log_file);
+        rewind(temp_file);
+        while (!feof(temp_file))
+        {
+            fread(&buffer_len, PACKET_LEN_SIZE, 1, temp_file);
+            fread(buffer, PACKET_MAX_LEN, 1, temp_file);
+            print_packet_detailed(buffer, buffer_len, log_file);
+        }        
     }
     fclose(log_file);
     printf("Created the file %s\n", file_name);
 }
 
-static void reset_sniffer()
+/**
+ * @brief resets the sniffer
+ * 
+ */
+static void control_sniffer_reset()
 {
     packet_id = 0;
     system("clear");
@@ -104,28 +132,33 @@ static void reset_sniffer()
     puts("Reset sniffer");
 }
 
-static void handle_action(char action)
+/**
+ * @brief calls a function according to the user input
+ * 
+ * @param action the user action
+ */
+static void control_sniffer_handle_action(char action)
 {
     switch (action)
     {
     case 's':
-        pthread_create(&sniffer_thread, NULL, start_sniffing, NULL);
+        pthread_create(&sniffer_thread, NULL, control_sniffer_start, NULL);
         break;
     case 'k':
     case 'b':
-        stop_sniffing();
+        control_sniffer_stop();
         break;
     case 'i':
-        stop_sniffing();
-        inspect_packet();
+        control_sniffer_stop();
+        control_sniffer_inspect_packet();
         break;
     case 'd':
-        stop_sniffing();
-        create_packets_log_file();
+        control_sniffer_stop();
+        control_sniffer_create_packets_log_file();
         break;
     case 'e':
-        stop_sniffing();
-        reset_sniffer();
+        control_sniffer_stop();
+        control_sniffer_reset();
         break;
     default:
         puts("Invalid option");
@@ -133,7 +166,7 @@ static void handle_action(char action)
     }
 }
 
-void user_actions()
+void control_sniffer_actions()
 {
     char action;
 
@@ -143,7 +176,7 @@ void user_actions()
     {
         puts("\ns - start listening\nk - stop listening\ni - inspect packet\nd - create log file\ne - erase history\nb - exit the program");
         scanf(" %c", &action);
-        handle_action(action);
+        control_sniffer_handle_action(action);
     }
 
     free(buffer);

@@ -1,4 +1,4 @@
-#include "process_packet.h"
+#include "print_packet.h"
 
 void print_packet_summary(unsigned char *buffer, uint32_t buffer_len)
 {
@@ -35,7 +35,15 @@ void print_packet_summary(unsigned char *buffer, uint32_t buffer_len)
     }
 }
 
-static void print_ethernet_header(unsigned char *buffer, uint32_t len, FILE *file)
+/**
+ * @brief prints the ethernet header of a packet, containing the source
+ * and destination mac addresses, and the protocol
+ * 
+ * @param buffer the packet
+ * @param len the packet length
+ * @param file the file to which the header will be written to
+ */
+static void print_packet_ethernet_header(unsigned char *buffer, uint32_t len, FILE *file)
 {
     struct ethhdr *eth = (struct ethhdr *)buffer;
 
@@ -45,7 +53,15 @@ static void print_ethernet_header(unsigned char *buffer, uint32_t len, FILE *fil
     fprintf(file, "\t|-Protocol : %d\n", eth->h_proto);
 }
 
-static void print_ip_header(unsigned char *buffer, uint32_t len, FILE *file)
+/**
+ * @brief prints the ip header of a packet, containing the source
+ * and destination ip addresses, the protocol, ttl etc
+ * 
+ * @param buffer the packet
+ * @param len the packet length
+ * @param file the file to which the header will be written to
+ */
+static void print_packet_ip_header(unsigned char *buffer, uint32_t len, FILE *file)
 {
     struct iphdr *ip_header;
     struct sockaddr_in source;
@@ -70,6 +86,13 @@ static void print_ip_header(unsigned char *buffer, uint32_t len, FILE *file)
     fprintf(file, "\t|-Destination IP          : %s\n", inet_ntoa(dest.sin_addr));
 }
 
+/**
+ * @brief prints the data that the packet contains, in hexadecimal
+ * 
+ * @param buffer the packet
+ * @param len the packet length
+ * @param file the file to which the data will be written to
+ */
 static void print_packet_data(unsigned char *data, uint32_t len, FILE *file)
 {
     int i;
@@ -85,7 +108,16 @@ static void print_packet_data(unsigned char *data, uint32_t len, FILE *file)
     }
 }
 
-static void print_tcp_packet(unsigned char *buffer, uint32_t len, FILE *file)
+/**
+ * @brief prints a tcp packet, which is composed of the ethernet and ip headers,
+ * and the tcp header, containing the source and destination ports, the tcp
+ * flags, checksum, data etc
+ * 
+ * @param buffer the packet
+ * @param len the packet length
+ * @param file the file to which the packet will be written to
+ */
+static void print_packet_tcp(unsigned char *buffer, uint32_t len, FILE *file)
 {
     struct iphdr *ip_header;
     uint16_t ip_header_len;
@@ -97,8 +129,8 @@ static void print_tcp_packet(unsigned char *buffer, uint32_t len, FILE *file)
     tcp_header = (struct tcphdr *)(buffer + ip_header_len + sizeof(struct ethhdr));
 
     fprintf(file, "***********************TCP Packet*************************\n");
-    print_ethernet_header(buffer, len, file);
-    print_ip_header(buffer, len, file);
+    print_packet_ethernet_header(buffer, len, file);
+    print_packet_ip_header(buffer, len, file);
 
     fprintf(file, "TCP Header\n");
     fprintf(file, "\t|-Source Port        : %u\n", ntohs(tcp_header->source));
@@ -123,7 +155,16 @@ static void print_tcp_packet(unsigned char *buffer, uint32_t len, FILE *file)
     fprintf(file, "\n**********************************************************\n\n\n");
 }
 
-static void print_udp_packet(unsigned char *buffer, uint32_t len, FILE *file)
+/**
+ * @brief prints a udp packet, which is composed of the ethernet and ip headers,
+ * and the udp header, containing the source and destination ports, checksum,
+ * data etc
+ * 
+ * @param buffer the packet
+ * @param len the packet length
+ * @param file the file to which the packet will be written to
+ */
+static void print_packet_udp(unsigned char *buffer, uint32_t len, FILE *file)
 {
     struct iphdr *ip_header;
     uint16_t ip_header_len;
@@ -135,8 +176,8 @@ static void print_udp_packet(unsigned char *buffer, uint32_t len, FILE *file)
     udp_header = (struct udphdr *)(buffer + ip_header_len + sizeof(struct ethhdr));
 
     fprintf(file, "***********************UDP Packet*************************\n");
-    print_ethernet_header(buffer, len, file);
-    print_ip_header(buffer, len, file);
+    print_packet_ethernet_header(buffer, len, file);
+    print_packet_ip_header(buffer, len, file);
 
     fprintf(file, "UDP Header\n");
     fprintf(file, "\t|-Source Port      : %d\n", ntohs(udp_header->source));
@@ -150,7 +191,15 @@ static void print_udp_packet(unsigned char *buffer, uint32_t len, FILE *file)
     fprintf(file, "\n**********************************************************\n\n\n");
 }
 
-static void print_icmp_packet(unsigned char *buffer, uint32_t len, FILE *file)
+/**
+ * @brief prints an icmp packet, which is composed of the ethernet and ip headers,
+ * and the icmp header containing the type, checksum, id, code, data etc
+ * 
+ * @param buffer the packet
+ * @param len the packet length
+ * @param file the file to which the packet will be written to
+ */
+static void print_packet_icmp(unsigned char *buffer, uint32_t len, FILE *file)
 {
     struct iphdr *ip_header;
     uint16_t ip_header_len;
@@ -162,8 +211,8 @@ static void print_icmp_packet(unsigned char *buffer, uint32_t len, FILE *file)
     icmp_header = (struct icmphdr *)(buffer + ip_header_len + sizeof(struct ethhdr));
 
     fprintf(file, "***********************ICMP Packet*************************\n");
-    print_ethernet_header(buffer, len, file);
-    print_ip_header(buffer, len, file);
+    print_packet_ethernet_header(buffer, len, file);
+    print_packet_ip_header(buffer, len, file);
 
     fprintf(file, "ICMP Header\n");
     fprintf(file, "\t|-Type : %d", (uint32_t)(icmp_header->type));
@@ -192,13 +241,13 @@ void print_packet_detailed(unsigned char *buffer, uint32_t len, FILE *file)
     switch (ip_header->protocol)
     {
     case 1: /* ICMP Protocol */
-        print_icmp_packet(buffer, len, file);
+        print_packet_icmp(buffer, len, file);
         break;
     case 6: /* TCP Protocol */
-        print_tcp_packet(buffer, len, file);
+        print_packet_tcp(buffer, len, file);
         break;
     case 17: /* UDP Protocol */
-        print_udp_packet(buffer, len, file);
+        print_packet_udp(buffer, len, file);
         break;
     }
 }
