@@ -18,7 +18,7 @@
 #include <pthread.h>
 
 #define PACKET_MAX_LEN 65536
-#define PACKET_LEN_SIZE 32
+#define PACKET_LEN_SIZE sizeof(int)
 
 extern FILE *temp_file;
 extern int sock_raw;

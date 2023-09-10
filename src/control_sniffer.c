@@ -42,11 +42,17 @@ static void inspect_packet()
     scanf("%d", &id);
     while (id)
     {
-        fseek(temp_file, (id - 1) * (PACKET_LEN_SIZE + PACKET_MAX_LEN), SEEK_SET);
-        fread(&buffer_len, 1, PACKET_LEN_SIZE, temp_file);
-        fread(buffer, 1, PACKET_MAX_LEN, temp_file);
-        print_packet_detailed(buffer, buffer_len, stdout);
-
+        if (id > 0 && id <= packet_id)
+        {
+            fseek(temp_file, (id - 1) * (PACKET_LEN_SIZE + PACKET_MAX_LEN), SEEK_SET);
+            fread(&buffer_len, PACKET_LEN_SIZE, 1, temp_file);
+            fread(buffer, PACKET_MAX_LEN, 1, temp_file);
+            print_packet_detailed(buffer, buffer_len, stdout);            
+        }
+        else
+        {
+            puts("There is no packet with the entered id\n");
+        }
         printf("Enter the packet id (0 to stop): ");
         scanf("%d", &id);
     }
@@ -74,22 +80,26 @@ static void create_packets_log_file()
     rewind(temp_file);
     while (!feof(temp_file))
     {
-        fread(&buffer_len, 1, PACKET_LEN_SIZE, temp_file);
-        fread(buffer, 1, PACKET_MAX_LEN, temp_file);
+        fread(&buffer_len, PACKET_LEN_SIZE, 1, temp_file);
+        fread(buffer, PACKET_MAX_LEN, 1, temp_file);
         print_packet_detailed(buffer, buffer_len, log_file);
-        temp_file += PACKET_LEN_SIZE + PACKET_MAX_LEN;
-        puts("c");
     }
     fclose(log_file);
-    printf("\nCreated the file %s\n", file_name);
+    printf("Created the file %s\n", file_name);
 }
 
 static void reset_sniffer()
 {
     packet_id = 0;
     system("clear");
+
+    fseek(temp_file, 0, SEEK_CUR);
     fclose(temp_file);
     temp_file = tmpfile();
+    if (temp_file == NULL)
+    {
+        puts("Unable to create the temp file");
+    }
 
     puts("Reset sniffer");
 }

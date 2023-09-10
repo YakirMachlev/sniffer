@@ -5,4 +5,3 @@
 #include "process_packet.h"
 
 void user_actions();
-void *start_sniffing();

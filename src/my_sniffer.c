@@ -22,19 +22,6 @@ static void sniffer()
         perror("Socket Error");
         exit(1);
     }
-
-    /* buffer = (unsigned char *)malloc(PACKET_MAX_LEN);
-    while (true)
-    {
-        buffer_len = recvfrom(sock_raw, buffer, PACKET_MAX_LEN, 0, NULL, NULL);
-        if (buffer_len < 0)
-        {
-            puts("Recvfrom error, failed to get packets");
-            exit(1);
-        }
-        print_packet_summary(buffer);
-    }
-    free(buffer); */
     user_actions();
 
     close(sock_raw);

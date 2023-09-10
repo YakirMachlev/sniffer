@@ -17,20 +17,20 @@ void print_packet_summary(unsigned char *buffer, uint32_t buffer_len)
     {
     case 1:
         printf("[%d] (ICMP) packet from (%s) to (%s)\n", packet_id, inet_ntoa(source.sin_addr), inet_ntoa(dest.sin_addr));
-        fwrite(&buffer_len, 1, PACKET_LEN_SIZE, temp_file);
-        fwrite(buffer, 1, PACKET_MAX_LEN, temp_file);
+        fwrite(&buffer_len, PACKET_LEN_SIZE, 1, temp_file);
+        fwrite(buffer, PACKET_MAX_LEN, 1, temp_file);
         break;
     case 6:
         tcp_header = (struct tcphdr *)(buffer + ip_header_len + sizeof(struct ethhdr));
         printf("[%d] (TCP) packet from (%s:%d) to (%s:%d)\n", packet_id, inet_ntoa(source.sin_addr), ntohs(tcp_header->source), inet_ntoa(dest.sin_addr), ntohs(tcp_header->dest));
-        fwrite(&buffer_len, 1, PACKET_LEN_SIZE, temp_file);
-        fwrite(buffer, 1, PACKET_MAX_LEN, temp_file);
+        fwrite(&buffer_len, PACKET_LEN_SIZE, 1, temp_file);
+        fwrite(buffer, PACKET_MAX_LEN, 1, temp_file);
         break;
     case 17:
         udp_header = (struct udphdr *)(buffer + ip_header_len + sizeof(struct ethhdr));
         printf("[%d] (UDP) packet from (%s:%d) to (%s:%d)\n", packet_id, inet_ntoa(source.sin_addr), ntohs(udp_header->source), inet_ntoa(dest.sin_addr), ntohs(udp_header->dest));
-        fwrite(&buffer_len, 1, PACKET_LEN_SIZE, temp_file);
-        fwrite(buffer, 1, PACKET_MAX_LEN, temp_file);
+        fwrite(&buffer_len, PACKET_LEN_SIZE, 1, temp_file);
+        fwrite(buffer, PACKET_MAX_LEN, 1, temp_file);
         break;
     }
 }
@@ -96,7 +96,7 @@ static void print_tcp_packet(unsigned char *buffer, uint32_t len, FILE *file)
     ip_header_len = ip_header->ihl * 4;
     tcp_header = (struct tcphdr *)(buffer + ip_header_len + sizeof(struct ethhdr));
 
-    fprintf(file, "\n\n***********************TCP Packet*************************\n");
+    fprintf(file, "***********************TCP Packet*************************\n");
     print_ethernet_header(buffer, len, file);
     print_ip_header(buffer, len, file);
 
@@ -120,7 +120,7 @@ static void print_tcp_packet(unsigned char *buffer, uint32_t len, FILE *file)
     fprintf(file, "\nData\n");
     headers_len = ip_header_len + tcp_header->doff * 4;
     print_packet_data(buffer + headers_len, len - headers_len, file);
-    fprintf(file, "\n**********************************************************\n");
+    fprintf(file, "\n**********************************************************\n\n\n");
 }
 
 static void print_udp_packet(unsigned char *buffer, uint32_t len, FILE *file)
@@ -134,7 +134,7 @@ static void print_udp_packet(unsigned char *buffer, uint32_t len, FILE *file)
     ip_header_len = ip_header->ihl * 4;
     udp_header = (struct udphdr *)(buffer + ip_header_len + sizeof(struct ethhdr));
 
-    fprintf(file, "\n\n***********************UDP Packet*************************\n");
+    fprintf(file, "***********************UDP Packet*************************\n");
     print_ethernet_header(buffer, len, file);
     print_ip_header(buffer, len, file);
 
@@ -147,7 +147,7 @@ static void print_udp_packet(unsigned char *buffer, uint32_t len, FILE *file)
     fprintf(file, "Data\n");
     headers_len = ip_header_len + sizeof(udp_header);
     print_packet_data(buffer + headers_len, len - headers_len, file);
-    fprintf(file, "\n**********************************************************\n");
+    fprintf(file, "\n**********************************************************\n\n\n");
 }
 
 static void print_icmp_packet(unsigned char *buffer, uint32_t len, FILE *file)
@@ -161,7 +161,7 @@ static void print_icmp_packet(unsigned char *buffer, uint32_t len, FILE *file)
     ip_header_len = ip_header->ihl * 4;
     icmp_header = (struct icmphdr *)(buffer + ip_header_len + sizeof(struct ethhdr));
 
-    fprintf(file, "\n\n***********************ICMP Packet*************************\n");
+    fprintf(file, "***********************ICMP Packet*************************\n");
     print_ethernet_header(buffer, len, file);
     print_ip_header(buffer, len, file);
 
@@ -181,7 +181,7 @@ static void print_icmp_packet(unsigned char *buffer, uint32_t len, FILE *file)
     headers_len = ip_header_len + sizeof(icmp_header);
     print_packet_data(buffer + headers_len, len - headers_len, file);
 
-    fprintf(file, "\n**********************************************************\n");
+    fprintf(file, "\n**********************************************************\n\n\n");
 }
 
 void print_packet_detailed(unsigned char *buffer, uint32_t len, FILE *file)
